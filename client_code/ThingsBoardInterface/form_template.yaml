@@ -1,15 +1,17 @@
 components:
 - components:
   - layout_properties: {grid_position: 'KPABSY,OYLZKZ'}
-    name: label_data
+    name: temparature_label
     properties: {}
     type: Label
   - components:
-    - layout_properties: {col_xs: 0, row: GQRJSA, width_xs: 5}
-      name: btnReadData
+    - event_bindings: {click: btnFetchData_click}
+      layout_properties: {col_xs: 0, row: GQRJSA, width_xs: 5}
+      name: btnFetchData
       properties: {role: elevated-button, text: Fetch Device Data}
       type: Button
-    - layout_properties: {col_xs: 8, row: GQRJSA, width_xs: 4}
+    - event_bindings: {click: btnWriteData_click}
+      layout_properties: {col_xs: 8, row: GQRJSA, width_xs: 4}
       name: btnWriteData
       properties: {role: elevated-button, text: send Data To Device}
       type: Button
