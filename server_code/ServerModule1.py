@@ -28,24 +28,22 @@ def write_device_data(data):
         return {"status": "Success"}
     else:
         return {"error": f"Failed to send data. Status code: {response.status_code}"}
-import anvil.server
-import requests
 
 @anvil.server.callable
 def fetch_device_data(username, password):
-    # Authenticate to get the JWT token
+    # Step 1: Authenticate to get the JWT token
     auth_url = "https://thingsboard.cloud/api/auth/login"
     auth_payload = {
         "username": username,
         "password": password
     }
     
-    # Authenticate and get the JWT token
     try:
+        # Authenticate and get the JWT token
         auth_response = requests.post(auth_url, json=auth_payload)
         auth_response.raise_for_status()  # Raise an error for bad responses
         jwt_token = auth_response.json().get("token")  # Extract the JWT token
-        print(f"JWT Token: {jwt_token}")  # Optionally log the JWT token for debugging
+        print(f"JWT Token: {jwt_token}")  # Log the JWT token for debugging
     except requests.exceptions.HTTPError as http_err:
         print(f"Authentication failed: {http_err}")
         return {"error": "Authentication failed. Check your username and password."}
@@ -53,17 +51,18 @@ def fetch_device_data(username, password):
         print(f"An error occurred: {err}")
         return {"error": "An unexpected error occurred."}
 
-    # Now, using the access token and device ID to fetch telemetry data
+    # Step 2: Fetch Telemetry Data
     device_id = "5e0437d0-8574-11ef-bb30-8bb8e87dad7e"  # Replace with your actual device ID
     access_token = "ydzn45p30ps6n8a1n3yg"  # Replace with your actual device access token
     telemetry_url = f"https://thingsboard.cloud/api/v1/{access_token}/telemetry/{device_id}"
     
     headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {jwt_token}"  # Include the JWT token in the header if required
     }
 
-    # Fetch telemetry data
     try:
+        # Fetch telemetry data
         telemetry_response = requests.get(telemetry_url, headers=headers)
         telemetry_response.raise_for_status()  # Raise an error for bad responses
         telemetry_data = telemetry_response.json()  # Parse the JSON response
