@@ -28,28 +28,49 @@ def write_device_data(data):
         return {"status": "Success"}
     else:
         return {"error": f"Failed to send data. Status code: {response.status_code}"}
+import anvil.server
+import requests
 
 @anvil.server.callable
 def fetch_device_data(username, password):
-    # Step 1: Authenticate
+    # Authenticate to get the JWT token
     auth_url = "https://thingsboard.cloud/api/auth/login"
-    auth_response = requests.post(auth_url, json={"username": username, "password": password})
+    auth_payload = {
+        "username": username,
+        "password": password
+    }
     
-    if auth_response.status_code != 200:
-        return {"error": "Authentication failed: " + auth_response.json().get('message', '')}
+    # Authenticate and get the JWT token
+    try:
+        auth_response = requests.post(auth_url, json=auth_payload)
+        auth_response.raise_for_status()  # Raise an error for bad responses
+        jwt_token = auth_response.json().get("token")  # Extract the JWT token
+        print(f"JWT Token: {jwt_token}")  # Optionally log the JWT token for debugging
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Authentication failed: {http_err}")
+        return {"error": "Authentication failed. Check your username and password."}
+    except Exception as err:
+        print(f"An error occurred: {err}")
+        return {"error": "An unexpected error occurred."}
 
-    token = auth_response.json().get('token')
-
-    # Step 2: Fetch telemetry data
+    # Now, using the access token and device ID to fetch telemetry data
     device_id = "5e0437d0-8574-11ef-bb30-8bb8e87dad7e"  # Replace with your actual device ID
-    telemetry_url = f"https://thingsboard.cloud/api/v1/{token}/telemetry/{device_id}"
+    access_token = "ydzn45p30ps6n8a1n3yg"  # Replace with your actual device access token
+    telemetry_url = f"https://thingsboard.cloud/api/v1/{access_token}/telemetry/{device_id}"
     
-    telemetry_response = requests.get(telemetry_url)
+    headers = {
+        "Content-Type": "application/json"
+    }
 
-    # Log the response to check for error messages
-    print("Telemetry response:", telemetry_response.json())  # Log the response to see what the API returns
-
-    if telemetry_response.status_code != 200:
-        return {"error": "Failed to fetch telemetry data: " + telemetry_response.json().get('message', '')}
-    
-    return telemetry_response.json()
+    # Fetch telemetry data
+    try:
+        telemetry_response = requests.get(telemetry_url, headers=headers)
+        telemetry_response.raise_for_status()  # Raise an error for bad responses
+        telemetry_data = telemetry_response.json()  # Parse the JSON response
+        return telemetry_data  # Return the telemetry data to the client
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Failed to fetch telemetry data: {http_err}")
+        return {"error": "Failed to fetch telemetry data."}
+    except Exception as err:
+        print(f"An error occurred: {err}")
+        return {"error": "An unexpected error occurred."}
